@@ -4,7 +4,7 @@ import os
 #import boto3
 import re  # 正規表現モジュールをインポート
 #from botocore.exceptions import ClientError
-import requests
+import urllib.request
 
 # Lambda コンテキストからリージョンを抽出する関数
 def extract_region_from_arn(arn):
@@ -43,7 +43,7 @@ def lambda_handler(event, context):
         conversation_history = body.get('conversationHistory', [])
         
         print("Processing message:", message)
-        print("Using model:", MODEL_ID)
+        #print("Using model:", MODEL_ID)
         
         # 会話履歴を使用
         messages = conversation_history.copy()
@@ -89,16 +89,22 @@ def lambda_handler(event, context):
         #    contentType="application/json"
         #)
         
-        response = requests.post("https://62ed-34-121-59-131.ngrok-free.app/generate",headers={"Content-Type": "application/json"},json={"prompt":message,"max_new_tokens":512,"do_sample":True,"temperature":0.7,"top_p":0.9})
+        url = "https://32df-35-204-68-144.ngrok-free.app/generate"
+        headers={"Content-Type": "application/json"}
+        payload = json.dumps({"prompt":message,"max_new_tokens":512,"do_sample":True,"temperature":0.7,"top_p":0.9}).encode("utf-8")
+        req = urllib.request.Request(url, data=payload, headers=headers,method="POST")
 
+        with urllib.request.urlopen(req) as res:
+            res_body = res.read()
+            response_body = json.loads(res_body)
+
+        print("APIresponse:", json.dumps(response_body, default=str))
         
 
         # レスポンスを解析
         #response_body = json.loads(response['body'].read())
         #print("Bedrock response:", json.dumps(response_body, default=str))
-        
-        response_body = response.json()
-        print("APIresponse:", json.dumps(response_body, default=str))
+    
     
         # 応答の検証
         #if not response_body.get('output') or not response_body['output'].get('message') or not response_body['output']['message'].get('content'):
